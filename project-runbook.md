@@ -24,7 +24,7 @@ Install AWSCLI
 --> mkdir ~/.aws 
 
 --> touch ~/.aws/credentials 
-    > Provide Access and Secrete Access Keys       (Make sure you run this command and configure your cli) 
+    > Provide Access and Secrete Access Keys       (Please Make sure you run this command and configure your cli) 
 
 --> sudo vi ~/.aws/credentials 
 
@@ -62,6 +62,8 @@ Install kubectl binary
 --> sudo apt-get install -y kubectl
 
 --> kubectl version --short --client 
+
+--> kubectl
 
 
 2) SET UP EKS CLUSTER 
@@ -115,8 +117,8 @@ cd
 ## Add official stable Helm repository 
 ```bash 
 
---> helm repo update 
 --> helm repo add stable https://charts.helm.sh/stable/ 
+--> helm repo update 
 
 ``` 
 
@@ -138,7 +140,7 @@ cd
 
 ```bash 
 
---> helm install stable/redis 
+--> helm install --generate-name stable/redis 
 
 ===If you run the above and got an errors run the bellow command, it requires a name=== 
 
@@ -152,7 +154,7 @@ Check the Redis Pods and If you'll like to Connect (There are 3 pods running, Ma
 
 --> kubectl get pods 
 
---> helm ls  
+--> helm ls 
 
 --> helm uninstall redis-test    (We will look at this again at the time when we're setting up our backend)
 
@@ -176,7 +178,7 @@ Execution:
 fetch current configmap before adding our user mapping
 
 ```bash
-
+--> cd
 --> kubectl -n kube-system get cm      (This command displays config map: The aws-auth)
 --> kubectl -n kube-system get configmap aws-auth -o yaml > aws-auth-configmap.yaml
 --> ll or ls -al
@@ -193,7 +195,7 @@ edit the yaml file and add a "mapUsers" section
 --> Open the aws-auth-configmap.yaml file and paste the bellow block of code
 --> Edit the username and ARN and pass that of the k8s Admin
 --> Save All
---> Copy the bellow block and paste (Make sure to delete the [] backets in that section)
+--> Copy the bellow block and paste (Please Make sure to delete the [] backets in that section)
 ``'bash
   mapUsers: |
     - userarn: arn:aws:iam::503868045399:user/k8s-xluster-admin
@@ -237,14 +239,16 @@ check which user is currently active
 
 ```bash
 --> kubectl create namespace production
+--> kubectl get namespaces
 
 ```
 
---> create IAM user and grab access-key
-  --> No permission
+--> create a Production Viewer IAM user and grab access-keys
+  --> Please do not add any permissions/policies (No permission)
 
 --> create role
   --> Go back to terminal
+  --> touch role.yml
   --> vi role.yml
   --> copy and paste the bellow yaml file in the "vi role.yml"
   --> save and quite
@@ -263,6 +267,7 @@ rules:
 ```
 
 3) ## create rolebinding
+--> touch rolebinding
 --> vi rolebinding
 --> Copy and Paste the bellow rolebinding yml file and paste in "vi rolebinding"
 --> save and quite
@@ -302,11 +307,21 @@ Get the latest version of the config map and edit it with the prod-viewer user
       username: prod-viewer
       groups:
         - prod-viewer-role
+
 ```
 --> kubectl apply -f aws-auth-configmap.yaml
 
 add user to ~/.aws/credentials file
 --> sudo vi ~/.aws/credentials
+
+'''
+[prod-viewer]
+aws_access_key_id=....
+aws_secret_access_key=....
+region=us-east-1
+output=json
+```
+
 --> aws sts get-caller-identity
 --> export AWS_PROFILE="prod-viewer"
 --> aws sts get-caller-identity
@@ -326,15 +341,16 @@ aws sts get-caller-identity
 --> kubectl -n production get pods
 
 ===CONFIRMED SO SWITCH BACK to ADMIN===
---> export AWS_PROFILE="k8s-xluster-admin"
+--> export AWS_PROFILE="clusteradmin"
 --> aws sts get-caller-identity
 --> kubectl run nginx --image=nginx --restart=Never -n production
 
 ==-SWITCH BACK TO ProdViewer and TEST Again===
+--> export AWS_PROFILE="prod-viewer"
 --> kubectl -n production get pods
 
 ===Switch Back To k8s Admin===
---> export AWS_PROFILE="k8s-xluster-admin"
+--> export AWS_PROFILE="clusteradmin"
 
 ==================3RD SECTION SAMPLE-STATELESS-APP FOLDER/deploy-sample-app.md==============
 # Setup sample guestbook app
@@ -353,7 +369,7 @@ deploy the master Redis pod and a _service_ on top of it:
 deploy the Redis slave pods and a _service_ on top of it:
 ```
 --> kubectl apply -f redis-slaves.yaml
---> kubectl get services redis-slaves
+--> kubectl get services redis-slave
 --> kubectl get pods
 --> kubectl get pods -o wide
 --> kubectl describe node ip-192-168-28-118.ca-central-1.compute.in
@@ -375,7 +391,7 @@ check AWS mgm console for the ELB which has been created !!!
 
 ## Access from outside the cluster
 grab the public DNS of the frontend service LoadBalancer (ELB):
-MAKE SURE TO DISCUSS THE DESCRIBE COMMAND AND HOW THE Internal and External lOAD BALANCERS. 
+Please MAKE SURE TO DISCUSS THE DESCRIBE COMMAND AND HOW THE Internal and External lOAD BALANCERS. 
 ALSO HOW THE PORT FORWARDING/PROXY WORKS FROM ELB TO NODES PORT 80 TO THE THE Internal ports running in the nodes.
 ```
 --> kubectl describe service frontend
