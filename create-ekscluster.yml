@@ -1,0 +1,13 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: EKS-course-cluster
+  region: "desired-region"
+
+nodeGroups:
+  - name: ng-1
+    instanceType: t2.small
+    desiredCapacity: 3
+    ssh: # use existing EC2 key
+      publicKeyName: "key-name"
